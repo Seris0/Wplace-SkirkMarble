@@ -6,6 +6,8 @@ This Blue Marble fork adds several improvements focused on user experience and p
 
 **Important:** Remove the original Blue Marble before installing Skirk Marble to avoid conflicts between scripts.
 
+If you **already have** Tampermonkey installed, [just click here](https://github.com/Seris0/Wplace-BlueMarble/raw/refs/heads/main/dist/BlueMarble.user.js). This should open the installation page directly in Tampermonkey. Then, just click "install."
+
 ## Individual Color Progress
 
 View the specific progress of each color in your template. Each color shows how many pixels have been painted, how many are wrong, and how many still need to be completed.
