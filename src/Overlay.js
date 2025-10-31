@@ -580,8 +580,80 @@ export default class Overlay {
     }
   }
 
+  /** Adds accessibility attributes to an element
+   * @param {HTMLElement} element - The element to add accessibility to
+   * @param {Object} options - Accessibility options
+   * @param {string} options.role - ARIA role
+   * @param {string} options.label - ARIA label
+   * @param {string} options.describedBy - ARIA described-by ID
+   * @since 1.0.0
+   */
+  addAccessibility(element, { role, label, describedBy } = {}) {
+    if (!element) return;
+
+    if (role) element.setAttribute('role', role);
+    if (label) element.setAttribute('aria-label', label);
+    if (describedBy) element.setAttribute('aria-describedby', describedBy);
+  }
+
+  /** Enables keyboard navigation for the overlay
+   * Supports Escape to close, Tab navigation, and Enter/Space for buttons
+   * @param {HTMLElement} overlayElement - The overlay root element
+   * @since 1.0.0
+   */
+  enableKeyboardNavigation(overlayElement) {
+    if (!overlayElement) return;
+
+    // Make overlay focusable
+    overlayElement.setAttribute('tabindex', '0');
+    overlayElement.setAttribute('role', 'dialog');
+    overlayElement.setAttribute('aria-modal', 'false');
+
+    // Keyboard event handler
+    const handleKeyDown = (e) => {
+      // Escape key to minimize/close
+      if (e.key === 'Escape') {
+        const minimizeBtn = overlayElement.querySelector('[data-minimize]');
+        if (minimizeBtn) minimizeBtn.click();
+      }
+
+      // Enter or Space on focused buttons
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.tagName === 'BUTTON') {
+        e.preventDefault();
+        e.target.click();
+      }
+
+      // Arrow keys for drag handle focus
+      if (e.target.id?.includes('drag') && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const step = e.shiftKey ? 50 : 10; // Larger steps with Shift
+        const style = window.getComputedStyle(overlayElement);
+        const transform = style.transform;
+
+        let x = 0, y = 0;
+        if (transform && transform !== 'none') {
+          const matrix = new DOMMatrix(transform);
+          x = matrix.m41;
+          y = matrix.m42;
+        }
+
+        switch (e.key) {
+          case 'ArrowUp': y -= step; break;
+          case 'ArrowDown': y += step; break;
+          case 'ArrowLeft': x -= step; break;
+          case 'ArrowRight': x += step; break;
+        }
+
+        overlayElement.style.transform = `translate(${x}px, ${y}px)`;
+      }
+    };
+
+    overlayElement.addEventListener('keydown', handleKeyDown);
+  }
+
   /** Handles dragging of the overlay.
    * Uses requestAnimationFrame for smooth animations and GPU-accelerated transforms.
+   * Includes touch support and accessibility features.
    * @param {string} moveMe - The ID of the element to be moved
    * @param {string} iMoveThings - The ID of the drag handle element
    * @since 0.8.2
@@ -607,6 +679,14 @@ export default class Overlay {
       this.handleDisplayError(`Can not drag! ${!moveMe ? 'moveMe' : ''} ${!moveMe && !dragHandle ? 'and ' : ''}${!dragHandle ? 'iMoveThings ' : ''}was not found!`);
       return; // Kills itself
     }
+
+    // Add accessibility attributes
+    dragHandle.setAttribute('role', 'button');
+    dragHandle.setAttribute('aria-label', 'Drag to move overlay. Use arrow keys to reposition.');
+    dragHandle.setAttribute('tabindex', '0');
+
+    // Enable keyboard navigation for the overlay
+    this.enableKeyboardNavigation(moveMe);
 
     // Smooth animation loop using requestAnimationFrame for optimal performance
     const updatePosition = () => {

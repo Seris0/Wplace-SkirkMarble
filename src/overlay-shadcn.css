@@ -1,0 +1,761 @@
+/**
+ * ShadCN-Inspired Design System for ClaudeMarble Overlay
+ * @since 1.0.0
+ *
+ * Design Principles:
+ * - Clean, minimalist color palette with subtle shadows
+ * - Smooth transitions and animations
+ * - Consistent spacing using 4px base scale
+ * - Modern typography with proper hierarchy
+ * - Full accessibility support
+ * - Responsive design for all viewports
+ */
+
+/* ============================================
+   DESIGN TOKENS (ShadCN-inspired)
+   ============================================ */
+
+:root {
+  /* Colors - Slate palette */
+  --overlay-bg: 255 255 255;
+  --overlay-fg: 15 23 42;
+  --overlay-border: 226 232 240;
+  --overlay-input: 241 245 249;
+  --overlay-primary: 15 23 42;
+  --overlay-primary-fg: 248 250 252;
+  --overlay-secondary: 241 245 249;
+  --overlay-secondary-fg: 15 23 42;
+  --overlay-muted: 241 245 249;
+  --overlay-muted-fg: 100 116 139;
+  --overlay-accent: 241 245 249;
+  --overlay-accent-fg: 15 23 42;
+  --overlay-destructive: 239 68 68;
+  --overlay-destructive-fg: 248 250 252;
+  --overlay-ring: 148 163 184;
+
+  /* Spacing scale (4px base) */
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;  /* 4px */
+  --spacing-2: 0.5rem;   /* 8px */
+  --spacing-3: 0.75rem;  /* 12px */
+  --spacing-4: 1rem;     /* 16px */
+  --spacing-5: 1.25rem;  /* 20px */
+  --spacing-6: 1.5rem;   /* 24px */
+  --spacing-8: 2rem;     /* 32px */
+
+  /* Border radius */
+  --radius-sm: 0.375rem;  /* 6px */
+  --radius-md: 0.5rem;    /* 8px */
+  --radius-lg: 0.75rem;   /* 12px */
+  --radius-xl: 1rem;      /* 16px */
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --overlay-bg: 15 23 42;
+    --overlay-fg: 248 250 252;
+    --overlay-border: 51 65 85;
+    --overlay-input: 30 41 59;
+    --overlay-primary: 248 250 252;
+    --overlay-primary-fg: 15 23 42;
+    --overlay-secondary: 30 41 59;
+    --overlay-secondary-fg: 248 250 252;
+    --overlay-muted: 30 41 59;
+    --overlay-muted-fg: 148 163 184;
+    --overlay-accent: 30 41 59;
+    --overlay-accent-fg: 248 250 252;
+    --overlay-ring: 100 116 139;
+  }
+}
+
+/* ============================================
+   OVERLAY CONTAINER
+   ============================================ */
+
+#bm-overlay {
+  /* Layout */
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  padding: var(--spacing-6);
+  max-width: 400px;
+  width: 100%;
+
+  /* Appearance */
+  background: rgb(var(--overlay-bg));
+  color: rgb(var(--overlay-fg));
+  border: 1px solid rgb(var(--overlay-border));
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+
+  /* Typography */
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+
+  /* Performance */
+  will-change: transform;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+
+  /* Transitions */
+  transition:
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
+
+  /* Positioning */
+  z-index: 9999;
+}
+
+/* Focus state for accessibility */
+#bm-overlay:focus-within {
+  border-color: rgb(var(--overlay-ring));
+  box-shadow:
+    var(--shadow-xl),
+    0 0 0 3px rgb(var(--overlay-ring) / 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  #bm-overlay {
+    max-width: calc(100vw - var(--spacing-8));
+    padding: var(--spacing-4);
+    gap: var(--spacing-4);
+  }
+}
+
+/* ============================================
+   DRAG BAR
+   ============================================ */
+
+#bm-bar-drag {
+  width: 100%;
+  height: 4px;
+  background: rgb(var(--overlay-muted));
+  border-radius: var(--radius-sm);
+  cursor: grab;
+  position: relative;
+  transition:
+    background var(--transition-base),
+    transform var(--transition-fast);
+  margin-bottom: var(--spacing-4);
+}
+
+#bm-bar-drag::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 12px;
+  background: rgb(var(--overlay-muted-fg) / 0.3);
+  border-radius: var(--radius-sm);
+}
+
+#bm-bar-drag:hover {
+  background: rgb(var(--overlay-muted-fg) / 0.5);
+  transform: scaleY(1.25);
+}
+
+#bm-bar-drag:active,
+#bm-bar-drag.dragging {
+  cursor: grabbing;
+  background: rgb(var(--overlay-muted-fg) / 0.7);
+}
+
+/* Accessibility: keyboard focus */
+#bm-bar-drag:focus-visible {
+  outline: 2px solid rgb(var(--overlay-ring));
+  outline-offset: 2px;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+#bm-contain-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-2);
+}
+
+#bm-title-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+#bm-title-container h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: rgb(var(--overlay-fg));
+  letter-spacing: -0.02em;
+}
+
+#bm-overlay img {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+/* ============================================
+   SEPARATORS
+   ============================================ */
+
+#bm-separator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin: var(--spacing-4) 0;
+  user-select: none;
+}
+
+#bm-separator::before,
+#bm-separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgb(var(--overlay-border));
+}
+
+#bm-separator-text {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(var(--overlay-muted-fg));
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#bm-overlay hr {
+  margin: var(--spacing-4) 0;
+  border: 0;
+  border-top: 1px solid rgb(var(--overlay-border));
+}
+
+/* ============================================
+   FORM CONTROLS
+   ============================================ */
+
+/* Input fields */
+#bm-overlay input[type="text"],
+#bm-overlay input[type="number"],
+#bm-overlay input[type="file"],
+#bm-overlay textarea {
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  background: rgb(var(--overlay-input));
+  border: 1px solid rgb(var(--overlay-border));
+  border-radius: var(--radius-md);
+  color: rgb(var(--overlay-fg));
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast);
+}
+
+#bm-overlay input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+#bm-overlay input[type="number"]::-webkit-outer-spin-button,
+#bm-overlay input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Focus state */
+#bm-overlay input:focus,
+#bm-overlay textarea:focus {
+  outline: none;
+  border-color: rgb(var(--overlay-ring));
+  box-shadow: 0 0 0 3px rgb(var(--overlay-ring) / 0.1);
+}
+
+/* Placeholder */
+#bm-overlay input::placeholder,
+#bm-overlay textarea::placeholder {
+  color: rgb(var(--overlay-muted-fg));
+}
+
+/* Disabled state */
+#bm-overlay input:disabled,
+#bm-overlay textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Invalid state - remove browser defaults */
+#bm-overlay input:invalid {
+  box-shadow: none;
+}
+
+/* Textarea */
+#bm-overlay textarea {
+  min-height: 80px;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+/* Checkboxes */
+#bm-overlay input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgb(var(--overlay-border));
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+#bm-overlay input[type="checkbox"]:checked {
+  background: rgb(var(--overlay-primary));
+  border-color: rgb(var(--overlay-primary));
+}
+
+#bm-overlay input[type="checkbox"]:focus-visible {
+  outline: 2px solid rgb(var(--overlay-ring));
+  outline-offset: 2px;
+}
+
+/* Labels */
+#bm-overlay label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(var(--overlay-fg));
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+#bm-overlay button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+
+  background: rgb(var(--overlay-primary));
+  color: rgb(var(--overlay-primary-fg));
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+
+  cursor: pointer;
+  user-select: none;
+
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+/* Button hover */
+#bm-overlay button:hover {
+  background: rgb(var(--overlay-primary) / 0.9);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Button active */
+#bm-overlay button:active {
+  transform: translateY(1px);
+}
+
+/* Button focus */
+#bm-overlay button:focus-visible {
+  outline: 2px solid rgb(var(--overlay-ring));
+  outline-offset: 2px;
+}
+
+/* Button disabled */
+#bm-overlay button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Secondary button variant */
+#bm-overlay button.secondary {
+  background: rgb(var(--overlay-secondary));
+  color: rgb(var(--overlay-secondary-fg));
+  border-color: rgb(var(--overlay-border));
+}
+
+#bm-overlay button.secondary:hover {
+  background: rgb(var(--overlay-secondary) / 0.8);
+}
+
+/* Destructive button variant */
+#bm-overlay button.destructive,
+#bm-overlay button#bm-button-delete,
+#bm-overlay button[id*="delete"] {
+  background: rgb(var(--overlay-destructive));
+  color: rgb(var(--overlay-destructive-fg));
+}
+
+#bm-overlay button.destructive:hover,
+#bm-overlay button#bm-button-delete:hover,
+#bm-overlay button[id*="delete"]:hover {
+  background: rgb(var(--overlay-destructive) / 0.9);
+}
+
+/* Ghost button variant */
+#bm-overlay button.ghost {
+  background: transparent;
+  color: rgb(var(--overlay-fg));
+  border-color: transparent;
+}
+
+#bm-overlay button.ghost:hover {
+  background: rgb(var(--overlay-accent));
+  color: rgb(var(--overlay-accent-fg));
+}
+
+/* Icon buttons */
+.bm-help,
+#bm-overlay button[aria-label] {
+  padding: var(--spacing-2);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+}
+
+/* Button icons */
+#bm-overlay button svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   CONTAINERS & SECTIONS
+   ============================================ */
+
+/* Information section */
+#bm-contain-userinfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4);
+  background: rgb(var(--overlay-muted));
+  border-radius: var(--radius-lg);
+}
+
+#bm-contain-userinfo > div {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: 0.8125rem;
+}
+
+/* Coordinates container */
+#bm-contain-coords {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+#bm-coords-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+
+#bm-contain-coords #bm-contain-inputs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-2);
+}
+
+#bm-contain-coords #bm-contain-inputs p {
+  display: none;
+}
+
+/* Responsive grid for smaller screens */
+@media (max-width: 640px) {
+  #bm-contain-coords #bm-contain-inputs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Template buttons container */
+#bm-contain-buttons-template {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-2);
+}
+
+/* Action buttons */
+#bm-contain-buttons-action {
+  display: flex;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
+#bm-contain-buttons-action > button {
+  flex: 1;
+  min-width: 100px;
+}
+
+/* Automation container */
+#bm-contain-automation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+/* Output status */
+#bm-output-status {
+  width: 100%;
+  min-height: 80px;
+  padding: var(--spacing-3);
+  background: rgb(var(--overlay-muted));
+  border: 1px solid rgb(var(--overlay-border));
+  border-radius: var(--radius-lg);
+  color: rgb(var(--overlay-fg));
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+/* ============================================
+   SPECIAL COMPONENTS
+   ============================================ */
+
+/* Mini tracker */
+#bm-mini-tracker {
+  padding: var(--spacing-3) var(--spacing-4);
+  background: rgb(var(--overlay-muted));
+  border-radius: var(--radius-lg);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
+  cursor: default;
+  user-select: none;
+}
+
+#bm-mini-tracker:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Color filter button */
+#bm-button-color-filter {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--overlay-primary)),
+    rgb(var(--overlay-accent))
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+/* Pause tiles button states */
+#bm-button-pause-tiles {
+  background: rgb(59 130 246);
+  transition: all var(--transition-base);
+}
+
+#bm-button-pause-tiles:hover {
+  background: rgb(37 99 235);
+}
+
+#bm-button-pause-tiles.paused {
+  background: rgb(34 197 94);
+}
+
+#bm-button-pause-tiles.paused:hover {
+  background: rgb(22 163 74);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Apply animations */
+#bm-overlay {
+  animation: fadeIn var(--transition-slow) ease-out;
+}
+
+/* Smooth transitions for minimize/maximize */
+#bm-contain-userinfo,
+#bm-contain-automation,
+#bm-contain-buttons-action {
+  transition:
+    opacity var(--transition-base),
+    max-height var(--transition-base),
+    margin var(--transition-base);
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* Focus visible for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid rgb(var(--overlay-ring));
+  outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-2 {
+  gap: var(--spacing-2);
+}
+
+.gap-3 {
+  gap: var(--spacing-3);
+}
+
+.gap-4 {
+  gap: var(--spacing-4);
+}
+
+.p-0 {
+  padding: 0;
+}
+
+.p-2 {
+  padding: var(--spacing-2);
+}
+
+.p-4 {
+  padding: var(--spacing-4);
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.text-muted {
+  color: rgb(var(--overlay-muted-fg));
+}
+
+.rounded-md {
+  border-radius: var(--radius-md);
+}
+
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
