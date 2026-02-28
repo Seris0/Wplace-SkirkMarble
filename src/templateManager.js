@@ -702,7 +702,7 @@ export default class TemplateManager {
          if (hasEnhancedColors && enhancedPixels && enhancedPixels.size > 0) {
            
            // Enhanced mode with performance limits
-           if (enhancedPixels.size > 60000) {
+           if (enhancedPixels.size > 700000) {
              debugLog(`Skipping enhanced mode: ${enhancedPixels.size} pixels (performance limit)`);
            } else {
              let crosshairCenterCount = 0;
