@@ -1358,78 +1358,72 @@ function observeBlack() {
  * @since 1.0.0
  */
 function observeOpacityButton() {
-  const observer = new MutationObserver(() => {
-    // Look for the opacity button (supports both languages)
-    const opacityButton = document.querySelector('button[title="Toggle art opacity"], button[title="Alterar opacidade"]');
-    if (!opacityButton) return;
-    
-    // Check if we already added our Map button container
-    let mapButtonContainer = document.querySelector('#bm-map-button-container');
-    if (mapButtonContainer) return;
-    
-    // Get the container div (absolute bottom-3 left-3 z-30)
-    const opacityContainer = opacityButton.closest('.absolute.bottom-3.left-3.z-30');
-    if (!opacityContainer) return;
-    
-    // Create a new container for the Map button positioned above the opacity button
-    mapButtonContainer = document.createElement('div');
-    mapButtonContainer.id = 'bm-map-button-container';
-    mapButtonContainer.className = 'fixed z-30';
-    mapButtonContainer.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      bottom: 230px;
-      left: 12px;
-    `;
-    
-    // Create the Wrong Pixels button (above Error Map button)
-    const wrongPixelsButton = document.createElement('button');
-    wrongPixelsButton.id = 'bm-button-wrong-pixels';
-    wrongPixelsButton.innerHTML = '❌';
-    wrongPixelsButton.className = 'btn btn-lg btn-square sm:btn-xl z-30 shadow-md text-base-content/80';
-    wrongPixelsButton.title = 'View Wrong Pixels Coordinates';
-    
-    wrongPixelsButton.onclick = function() {
-      showWrongPixelsDialog(overlayMain);
-    };
-    
-    // Create the Map button
-    const mapButton = document.createElement('button');
-    mapButton.id = 'bm-button-map-positioned';
-    mapButton.innerHTML = '🗺️';
-    mapButton.className = 'btn btn-lg btn-square sm:btn-xl z-30 shadow-md text-base-content/80';
-    mapButton.title = 'Error Map View';
-    
-    // Initialize button appearance based on saved state
-    const initialState = getErrorMapEnabled();
-    if (initialState) {
-      mapButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-      mapButton.style.color = 'white';
-    }
-    
-    mapButton.onclick = function() {
-      toggleErrorMapMode();
-      const isEnabled = getErrorMapEnabled();
-      if (isEnabled) {
-        this.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-        this.style.color = 'white';
-      } else {
-        this.style.background = '';
-        this.style.color = '';
-      }
-      overlayMain.handleDisplayStatus(`Error Map ${isEnabled ? 'enabled' : 'disabled'}! ${isEnabled ? 'Green=correct, Red=wrong pixels' : 'Back to normal view'}`);
-    };
-    
-    // Add the buttons to our container
-    mapButtonContainer.appendChild(wrongPixelsButton);
-    mapButtonContainer.appendChild(mapButton);
-    
-    // Insert the Map button container directly into the body with fixed positioning
-    document.body.appendChild(mapButtonContainer);
-  });
+    const observer = new MutationObserver(() => {
+        // Check if we already added our Map button container
+        let mapButtonContainer = document.querySelector('#bm-map-button-container');
+        if (mapButtonContainer) return;
 
-  observer.observe(document.body, { childList: true, subtree: true });
+        // Busca o container pai diretamente pela classe (não depende mais do título do botão)
+        const opacityContainer = document.querySelector('.absolute.bottom-3.left-3.z-30');
+        if (!opacityContainer) return;
+
+        // Create a new container for the Map button positioned above the opacity button
+        mapButtonContainer = document.createElement('div');
+        mapButtonContainer.id = 'bm-map-button-container';
+        mapButtonContainer.className = 'fixed z-30';
+        mapButtonContainer.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            bottom: 230px;
+            left: 12px;
+        `;
+
+        // Create the Wrong Pixels button (above Error Map button)
+        const wrongPixelsButton = document.createElement('button');
+        wrongPixelsButton.id = 'bm-button-wrong-pixels';
+        wrongPixelsButton.innerHTML = '❌';
+        wrongPixelsButton.className = 'btn btn-lg btn-square sm:btn-xl z-30 shadow-md text-base-content/80';
+        wrongPixelsButton.title = 'View Wrong Pixels Coordinates';
+        wrongPixelsButton.onclick = function() {
+            showWrongPixelsDialog(overlayMain);
+        };
+
+        // Create the Map button
+        const mapButton = document.createElement('button');
+        mapButton.id = 'bm-button-map-positioned';
+        mapButton.innerHTML = '🗺️';
+        mapButton.className = 'btn btn-lg btn-square sm:btn-xl z-30 shadow-md text-base-content/80';
+        mapButton.title = 'Error Map View';
+
+        // Initialize button appearance based on saved state
+        const initialState = getErrorMapEnabled();
+        if (initialState) {
+            mapButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            mapButton.style.color = 'white';
+        }
+
+        mapButton.onclick = function() {
+            toggleErrorMapMode();
+            const isEnabled = getErrorMapEnabled();
+            if (isEnabled) {
+                this.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                this.style.color = 'white';
+            } else {
+                this.style.background = '';
+                this.style.color = '';
+            }
+            overlayMain.handleDisplayStatus(`Error Map ${isEnabled ? 'enabled' : 'disabled'}! ${isEnabled ? 'Green=correct, Red=wrong pixels' : 'Back to normal view'}`);
+        };
+
+        // Add the buttons to our container
+        mapButtonContainer.appendChild(wrongPixelsButton);
+        mapButtonContainer.appendChild(mapButton);
+
+        // Insert the Map button container directly into the body with fixed positioning
+        document.body.appendChild(mapButtonContainer);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 }
 
 /** Deletes all templates from storage with confirmation dialog
