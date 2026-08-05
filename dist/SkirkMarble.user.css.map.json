@@ -88,5 +88,7 @@
   "bm-wrong-pixels-overlay": "bm-1G",
   "bm-button-wrong-pixels": "bm-1L",
   "bm-top-progress-bar": "bm-1X",
-  "bm-button-top-bar": "bm-29"
+  "bm-button-top-bar": "bm-29",
+  "bm-missing-pixels-overlay": "bm-1A",
+  "bm-button-missing-pixels": "bm-1E"
 }

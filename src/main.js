@@ -1389,6 +1389,15 @@ function observeOpacityButton() {
             showWrongPixelsDialog(overlayMain);
         };
 
+        const missingPixelsButton = document.createElement('button');
+        missingPixelsButton.id = 'bm-button-missing-pixels';
+        missingPixelsButton.innerHTML = '🔍';
+        missingPixelsButton.className = 'btn btn-lg btn-square sm:btn-xl z-30 shadow-md text-base-content/80';
+        missingPixelsButton.title = 'View Missing Pixel Coordinates';
+        missingPixelsButton.onclick = function() {
+            showMissingPixelsDialog(overlayMain);
+        };
+
         // Create the Map button
         const mapButton = document.createElement('button');
         mapButton.id = 'bm-button-map-positioned';
@@ -1418,6 +1427,7 @@ function observeOpacityButton() {
 
         // Add the buttons to our container
         mapButtonContainer.appendChild(wrongPixelsButton);
+        mapButtonContainer.appendChild(missingPixelsButton);
         mapButtonContainer.appendChild(mapButton);
 
         // Insert the Map button container directly into the body with fixed positioning
@@ -2880,6 +2890,256 @@ function showWrongPixelsDialog(instance) {
         }
       };
       
+      pixelItem.appendChild(swatch);
+      pixelItem.appendChild(info);
+      pixelItem.appendChild(flyBtn);
+      pixelsList.appendChild(pixelItem);
+    });
+  });
+}
+
+/** Shows missing pixels coordinates dialog with fly-to functionality
+ * @param {Object} instance - The overlay instance
+ * @since 1.0.0
+ */
+function showMissingPixelsDialog(instance) {
+  const missingPixelsList = [];
+
+  if (!templateManager || !templateManager.tileProgress || templateManager.tileProgress.size === 0) {
+    instance.handleDisplayError('No tile data available. Please load a template first!');
+    return;
+  }
+
+  for (const [tileCoords, tileData] of templateManager.tileProgress.entries()) {
+    if (tileData.missing > 0 && tileData.colorBreakdown) {
+      const [tileX, tileY] = tileCoords.split(',').map(Number);
+
+      for (const [colorKey, colorStats] of Object.entries(tileData.colorBreakdown)) {
+        if (colorStats.missing > 0 && colorStats.firstMissingPixel) {
+          missingPixelsList.push({
+            tileX,
+            tileY,
+            colorKey,
+            missingCount: colorStats.missing,
+            tileCoords: `${tileX}, ${tileY}`,
+            pixelX: colorStats.firstMissingPixel[0],
+            pixelY: colorStats.firstMissingPixel[1]
+          });
+        }
+      }
+    }
+  }
+
+  if (missingPixelsList.length === 0) {
+    instance.handleDisplayStatus('🎉 No missing pixels found! All required pixels are painted or wrong.');
+    return;
+  }
+
+  missingPixelsList.sort((a, b) => b.missingCount - a.missingCount);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'bm-missing-pixels-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  `;
+
+  const container = document.createElement('div');
+  container.style.cssText = `
+    background: #1e293b;
+    color: #f1f5f9;
+    border-radius: 20px;
+    border: 1px solid #334155;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(16px);
+    max-width: 390px;
+    width: 90%;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  `;
+
+  const header = document.createElement('div');
+  header.style.cssText = `
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px 12px 16px;
+    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, #1e293b, #293548);
+  `;
+
+  const title = document.createElement('h3');
+  title.textContent = `Missing Pixels (${missingPixelsList.length} locations)`;
+  title.style.cssText = `
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: 700;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  `;
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '×';
+  closeBtn.className = 'bm-close-btn';
+  closeBtn.style.cssText = `
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+  `;
+  closeBtn.onclick = () => document.body.removeChild(overlay);
+
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+
+  const content = document.createElement('div');
+  content.style.cssText = `
+    padding: 14px 16px;
+    overflow-y: auto;
+    flex: 1;
+  `;
+
+  const pixelsList = document.createElement('div');
+  pixelsList.style.cssText = `
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  `;
+
+  const loadingDiv = document.createElement('div');
+  loadingDiv.style.cssText = `
+    text-align: center;
+    padding: 40px;
+    color: #94a3b8;
+    font-size: 14px;
+  `;
+  loadingDiv.textContent = 'Loading missing pixels...';
+  pixelsList.appendChild(loadingDiv);
+
+  content.appendChild(pixelsList);
+  container.appendChild(header);
+  container.appendChild(content);
+  overlay.appendChild(container);
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      document.body.removeChild(overlay);
+    }
+  });
+
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    pixelsList.innerHTML = '';
+
+    missingPixelsList.forEach((missingPixel) => {
+      const pixelItem = document.createElement('div');
+      pixelItem.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 10px;
+        background: #334155;
+        border-radius: 6px;
+        border: 1px solid #475569;
+        gap: 8px;
+      `;
+
+      const [r, g, b] = missingPixel.colorKey.split(',').map(Number);
+      const swatch = document.createElement('div');
+      swatch.style.cssText = `
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        background: rgb(${r}, ${g}, ${b});
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        flex-shrink: 0;
+      `;
+
+      const info = document.createElement('div');
+      info.style.cssText = 'flex: 1; min-width: 0;';
+      info.innerHTML = `
+        <div style="font-weight: 600; color: #f1f5f9; margin-bottom: -5px; font-size: 0.9em;">
+          Tile ${missingPixel.tileX}, ${missingPixel.tileY}
+        </div>
+        <div style="font-size: 0.8em; color: #94a3b8;">
+          ${missingPixel.missingCount} missing pixel${missingPixel.missingCount > 1 ? 's' : ''} • RGB(${r}, ${g}, ${b})
+        </div>
+      `;
+
+      const flyBtn = document.createElement('button');
+      flyBtn.innerHTML = icons.pinIcon;
+      flyBtn.title = 'Fly to this tile';
+      flyBtn.style.cssText = `
+        padding: 6px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        min-width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        flex-shrink: 0;
+      `;
+
+      flyBtn.onclick = () => {
+        const pX = missingPixel.pixelX;
+        const pY = missingPixel.pixelY;
+        const coordTxInput = document.querySelector('#bm-input-tx');
+        const coordTyInput = document.querySelector('#bm-input-ty');
+        const coordPxInput = document.querySelector('#bm-input-px');
+        const coordPyInput = document.querySelector('#bm-input-py');
+
+        if (coordTxInput) coordTxInput.value = missingPixel.tileX;
+        if (coordTyInput) coordTyInput.value = missingPixel.tileY;
+        if (coordPxInput) coordPxInput.value = pX;
+        if (coordPyInput) coordPyInput.value = pY;
+
+        const latLng = canvasPosToLatLng([missingPixel.tileX, missingPixel.tileY, pX, pY]);
+        if (latLng) {
+          const navigationMethod = Settings.getNavigationMethod();
+          const zoom = 19.5;
+
+          if (navigationMethod === 'openurl') {
+            const url = `https://wplace.live/?lat=${latLng.lat}&lng=${latLng.lng}&zoom=${zoom}`;
+            window.location.href = url;
+          } else {
+            flyToLatLng(latLng.lat, latLng.lng, zoom);
+          }
+
+          document.body.removeChild(overlay);
+          instance.handleDisplayStatus(`🧭 ${navigationMethod === 'openurl' ? 'Navigating' : 'Flying'} to missing pixel at Tile ${missingPixel.tileX},${missingPixel.tileY} (${pX}, ${pY})!`);
+        } else {
+          instance.handleDisplayError('❌ Unable to convert coordinates!');
+        }
+      };
+
       pixelItem.appendChild(swatch);
       pixelItem.appendChild(info);
       pixelItem.appendChild(flyBtn);
